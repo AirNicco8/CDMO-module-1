@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 import os
 import time
 
-num = 11
+#input from keyboard
+num = input("Please enter the number of the instance:")
 
 #reading the instance
 def read_instance(i):
@@ -55,16 +56,9 @@ def plot_solution(width, n_rets, sizes, positions):
 width = int(s[0])
 n_rets = int(s[1])
 
-
+#splitting the list and casting the string to int
 sizes = [i.split() for i in s[-n_rets:]]
-
-for i in range(n_rets):
-    for j in range(2):
-        sizes[i][j] = int(sizes[i][j])
-
-#ordering rectangles based on their area
-#area = [i[0]*i[1] for i in sizes]
-#ssizes = [x for _, x in sorted(zip(area, sizes), reverse=True)]
+sizes = [[int(sizes[i][j]) for j in range(2)] for i in range(n_rets)]
 
 #load model from file
 dirname = os.path.dirname(__file__)
