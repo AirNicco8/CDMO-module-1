@@ -4,6 +4,7 @@ from datetime import timedelta
 import fileinput
 import matplotlib.pyplot as plt
 import os
+from pathlib import Path
 import time
 
 #input from keyboard
@@ -59,6 +60,7 @@ n_rets = int(s[1])
 #splitting the list and casting the string to int
 sizes = [i.split() for i in s[-n_rets:]]
 sizes = [[int(sizes[i][j]) for j in range(2)] for i in range(n_rets)]
+sizes.sort(key=lambda tup: tup[1]*tup[0], reverse=True)
 
 #load model from file
 dirname = os.path.dirname(__file__)

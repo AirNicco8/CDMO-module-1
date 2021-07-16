@@ -33,9 +33,14 @@ for i in range(n_rets):
     max_height = max_height + sizes[i][1]
 
 # Calculation of the area
-area = [sizes[i][0]*sizes[i][1] for i in range(n_rets)]
-area.append(0)
-
+# area = [sizes[i][0]*sizes[i][1] for i in range(n_rets)]
+# space_occupied = sum(area)
+# free_space = (max_height*width) - space_occupied
+# area.append(free_space)
+# print(area)
+rangesx, rangesy = [], []
+rangesx = [(width-sizes[i][0]+1) for n in range(n_rets)]
+ragnesy = [(width-sizes[i][1]+1) for n in range(n_rets)]
 ###############################SAT MODEL########################################
 
 # Functions
@@ -49,46 +54,67 @@ def exactly_one(solver, bool_vars):
     solver.add(at_most_one(bool_vars))
     solver.add(at_least_one(bool_vars))
 
-def at_least_n(bool_vars, n):
-    pa = BoolVector(bool_vars, n)
-    return Or(And(pa))
+# def exactly_n(literals, n):
+#     c = []
+#     for pairs in combinations(literals, n+1):
+#         c += [Not(And(pairs))]
+#     # At least
+#     for pairs in combinations(literals, n):
+#         c += [Or(pairs)]
+#     return And(c)
 
-def at_most_n(bool_vars, n):
-    pa = BoolVector(bool_vars, n)
-    return Not(And(pa))
 
-def exactly_n(solver, bool_vars, n):
-    solver.add(at_most_n(bool_vars, n))
-    solver.add(at_least_n(bool_vars, n))
-
-totk = n_rets+1
 #variables
-p = [[[Bool(f"x_{i}_{j}_{k}") for k in range(totk)] for j in range(max_height)] for i in range(width)]
+px = [[Bool(f"x_{n}_{i}") for i in range(len(rangesx))] for n in range(n_rets)]
+py = [[Bool(f"y_{n}_{i}") for i in range(len(rangesy))] for n in range(n_rets)]
 
 s = Solver()
 
-# A cell has only one value
-for i in range(width):
-    for j in range(max_height):
-        exactly_one(s, p[i][j])
+# Order Constraint 
+# For the x
+for i in range(n_rets):
+    ord = []
+    for j in range(len(rangesx)-1):
+        ord += [Or(Not(px[i][j]), px[i][j+1])]
+    s.add(ord)
 
-# A rectangle can be placed only once
-for i in range(width):
-    for j in range(max_height):
-        for k in range(0,totk-1):
-            exactly_n(s, p[i][j], area[k])
+# For the y
+for i in range(n_rets):
+    ordi = []
+    for j in range(len(rangesy)-1):
+        ordi += [Or(Not(py[i][j]), py[i][j+1])]
+    s.add(ordi)
+
+# A cell has only one value
+# for i in range(width):
+#     for j in range(max_height):
+#         exactly_one(s, p[i][j])
+
+# there can be only a number of variables true for each rectangle
+# This number is equal to the area of each rectangle
+# for k in range(totk):
+#     g = []
+#     for i in range(width):
+#         for j in range(max_height):
+#             g += [p[i][j][k]]
+#     s.add(exactly_n(g, area[k]))
+
+# sol = []
+# if s.check() == sat:
+#     m = s.model()
+#     for i in range(width):
+#         sol.append([])
+#         for j in range(max_height):
+#             for k in range(totk):
+#                 if m.evaluate(p[i][j][k]):
+#                     sol[i].append(k)
+# else:
+#     print("Failed to solve")
 
 sol = []
 if s.check() == sat:
     m = s.model()
-    for i in range(width):
-        sol.append([])
-        for j in range(max_height):
-            for k in range(totk):
-                if m.evaluate(p[i][j][k]):
-                    sol[i].append(k+1)
+    print(m)
 else:
     print("Failed to solve")
 
-print(len(sol))
-print(sol)
