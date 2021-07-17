@@ -60,7 +60,54 @@ constraint cumulative([positions[i,1] | i in RETS], size1, size2, l) /\ forall(i
        
 constraint diffn([positions[i,1] | i in RETS], [positions[i,2] | i in RETS],size1,size2);
 
-% constraint forall(i,j in RETS where (i != j /\ positions[i,1] == positions[j,1] /\ sizes[i,1] == sizes[j,1]))
+% symmetry breaking
+
+% two circuits forming a bigger rectangle in any of the dimensions can be switched
+
+% does the rest of the solution make difference?
+% add in lhs of implication [positions[k,1] | k in RETS where k != i /\ k != j] = [s[k,1] | k in RETS where k != i /\ k != j] /\ 
+%/*
+constraint forall(i,j in RETS where i<j)(
+  if ((positions[j,1]+sizes[j,1] == positions[i,1]) /\ (sizes[j,2] == sizes[i,2])) then
+    let {
+          array[RETS,1..2] of var int: s=positions, constraint s[j,1] = positions[i,1] /\ s[i,1] = positions[j,1]
+        } in(
+              lex_lesseq(array1d(positions), array1d(s))
+            )
+  else 
+       1>0
+  endif
+  );
+
+constraint forall(i,j in RETS where i<j)(
+  if ((positions[j,2]+sizes[j,2] == positions[i,2]) /\ (sizes[j,1] == sizes[i,1])) then
+    let { 
+          array[RETS,1..2] of var int: s = positions, constraint s[j,2] = positions[i,2] /\ s[i,2] = positions[j,2]
+        } in(
+              lex_lesseq(array1d(positions), array1d(s))
+            )
+  else 
+       1>0
+  endif
+  );
+
+
+% two circuits which are equal can be switched
+
+constraint forall(i,j in RETS where i<j)(
+  if (sizes[j,1] == sizes[i,1] /\ sizes[j,2] == sizes[i,2]) then
+    let {
+          array[RETS,1..2] of var int: s, constraint s[j,1] = positions[i,1] /\ s[i,1] = positions[j,1] /\
+               s[j,2] = positions[i,2] /\ s[i,2] = positions[j,2]
+        } in(
+              lex_lesseq(array1d(positions), array1d(s))
+            )
+  else 
+       1>0
+  endif
+  );
+
+%*/
 
 %OBJECTIVE
 
@@ -69,7 +116,7 @@ constraint diffn([positions[i,1] | i in RETS], [positions[i,2] | i in RETS],size
 ann: search_split1 = int_search([positions[i,2] | i in RETS] ++ [positions[i,1] | i in RETS], dom_w_deg, indomain_min, complete);
 ann: search_split2 = int_search([l], dom_w_deg, indomain_min, complete);
 
-ann: search_ann_dwd = int_search([l] ++ [positions[i,2] | i in RETS] ++ [positions[i,1] | i in RETS], dom_w_deg, indomain_min, 
+ann: search_ann_dwd = int_search([l] ++ [positions[i,2] | i in RETS] ++ [positions[i,1] | i in RETS], dom_w_deg, indomain_split, 
 complete);
 
 ann: search_ann_ff = int_search([l] ++ [positions[i,2] | i in RETS] ++ [positions[i,1] | i in RETS], first_fail, indomain_min, complete);
@@ -79,5 +126,5 @@ ann: search_ann_io = int_search([l] ++ [positions[i,2] | i in RETS] ++ [position
 
 % we want to minimize l
 
-%solve :: seq_search([search_split1, search_split2]) minimize l;
+%solve :: seq_search([search_split2, search_split1]) minimize l;
 solve :: search_ann_io minimize l;
