@@ -76,10 +76,6 @@ for i in range(width):
     for j in range(max_height):
         exactly_one(s, p[i][j])
 
-# A rectangle has only one position
-for n in range(n_rets):
-    exactly_one(s, [p[i][j][n] for i in range(width) for j in range(max_height)])
-
 # Position should respect width
 for n in range(n_rets):
     s.add(at_least_one([p[i][j][n] for i in range(width-sizes[n][0]+1) for j in range(max_height)]))
@@ -88,8 +84,16 @@ for n in range(n_rets):
 for n in range(n_rets):
     s.add(at_least_one([p[i][j][n] for i in range(width) for j in range(max_height-sizes[n][1]+1)]))
 
+# A rectangle has only one position
+for n in range(n_rets):
+     exactly_one(s, [p[i][j][n] for i in range(width) for j in range(max_height)])
+
 # Solving overlapping
-        
+
+
+# 5 minutes time limit
+time = 300000 # in milliseconds
+s.set(timeout=time)
 
 sol = []
 if s.check() == sat:
@@ -100,14 +104,18 @@ if s.check() == sat:
             for k in range(n_rets+1):
                 if m.evaluate(p[i][j][k]):
                     sol[i].append(k)
+elif s.reason_unknown() == "timeout":
+    print("Solver timeout")
 else:
-     print("Failed to solve")
+    print("Failed to solve")
+    exit(0)
 
 positions = []
 for i in range(len(sol)):
     for j in range(len(sol[0])):
         if sol[i][j] != n_rets:
             positions.append([i,j])
+
 
 plot_solution(width, n_rets, sizes, positions, max_height)
 
