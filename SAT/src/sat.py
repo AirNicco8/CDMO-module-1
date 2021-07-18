@@ -1,6 +1,7 @@
 from z3 import *
 import matplotlib.pyplot as plt
 from itertools import combinations
+import numpy
 
 
 import fileinput
@@ -49,9 +50,11 @@ sizes = [i.split() for i in s[-n_rets:]]
 sizes = [[int(sizes[i][j]) for j in range(2)] for i in range(n_rets)]
 
 # Calculating the max height that the model can reach
-max_height = 0
+max_h = 0
 for i in range(n_rets):
-    max_height = max_height + sizes[i][1]
+    max_h = max_h + sizes[i][1]
+
+min_h = max([sizes[i][1] for i in range(n_rets)])
 
 ###############################SAT MODEL########################################
 
@@ -65,59 +68,67 @@ def at_most_one(bool_vars):
 def exactly_one(solver, bool_vars):
     solver.add(at_most_one(bool_vars))
     solver.add(at_least_one(bool_vars))
+    
+def vlsi(height):
+    # Variables
+    p = [[[Bool(f"x_{i}_{j}_{n}") for n in range(n_rets+2)] for j in range(height)] for i in range(width)]
 
-# Variables
-p = [[[Bool(f"x_{i}_{j}_{n}") for n in range(n_rets+1)] for j in range(max_height)] for i in range(width)]
+    s = Solver()
 
-s = Solver()
-
-# A cell has only one value
-for i in range(width):
-    for j in range(max_height):
-        exactly_one(s, p[i][j])
-
-# Position should respect width
-for n in range(n_rets):
-    s.add(at_least_one([p[i][j][n] for i in range(width-sizes[n][0]+1) for j in range(max_height)]))
-
-# Position should respect height
-for n in range(n_rets):
-    s.add(at_least_one([p[i][j][n] for i in range(width) for j in range(max_height-sizes[n][1]+1)]))
-
-# A rectangle has only one position
-for n in range(n_rets):
-     exactly_one(s, [p[i][j][n] for i in range(width) for j in range(max_height)])
-
-# Solving overlapping
-
-
-# 5 minutes time limit
-time = 300000 # in milliseconds
-s.set(timeout=time)
-
-sol = []
-if s.check() == sat:
-    m = s.model()
+    # A cell has only one value
     for i in range(width):
-        sol.append([])
-        for j in range(max_height):
-            for k in range(n_rets+1):
-                if m.evaluate(p[i][j][k]):
-                    sol[i].append(k)
-elif s.reason_unknown() == "timeout":
-    print("Solver timeout")
-else:
-    print("Failed to solve")
-    exit(0)
+        for j in range(height):
+            exactly_one(s, p[i][j])
 
-positions = []
-for i in range(len(sol)):
-    for j in range(len(sol[0])):
-        if sol[i][j] != n_rets:
-            positions.append([i,j])
+    # A rectangle has only one position
+    for n in range(n_rets):
+        exactly_one(s, [p[i][j][n] for i in range(width) for j in range(height)])
 
+    # Position should respect width
+    for n in range(n_rets):
+        s.add(at_least_one([p[i][j][n] for i in range(width-sizes[n][0]+1) for j in range(height)]))
 
-plot_solution(width, n_rets, sizes, positions, max_height)
+    # Position should respect height
+    for n in range(n_rets):
+        s.add(at_least_one([p[i][j][n] for i in range(width) for j in range(height-sizes[n][1]+1)]))
 
+    # Solving overlapping
+    for n in range(n_rets):
+        for i in range(width-sizes[n][0]+1):
+            for j in range(height-sizes[n][1]+1):
+                for k in range(i, i + sizes[n][0]):
+                    for u in range(j, j + sizes[n][1]):
+                        if(k != i or u != j):
+                            s.add(Implies(p[i][j][n], p[k][u][n_rets+1]))
+                            
+    #for c in s.assertions():
+     #   print (c)
+
+    sol = []
+    if s.check() == sat:
+        m = s.model()
+        for i in range(width):
+            sol.append([])
+            for j in range(height):
+                for k in range(n_rets+2):
+                    if m.evaluate(p[i][j][k]):
+                        sol[i].append(k)
+    else:
+         print("Failed to solve")
+    return sol
+
+a = True
+for i in range(min_h, max_h):
+    m = vlsi(i)
+    aaa = numpy.array(m)
+    print(aaa)
+    if(m and a):
+        positions = []
+        for i in range(len(m)):
+            for j in range(len(m[0])):
+                if (m[i][j] != n_rets) and (m[i][j] != n_rets+1):
+                    positions.append([i,j])
+        plot_solution(width, n_rets, sizes, positions, i)
+        a = False
 
 
