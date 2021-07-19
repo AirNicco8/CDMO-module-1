@@ -32,7 +32,7 @@ def plot_solution(width, n_rets, sizes, positions, height):
     for i in range(n_rets):
         ax.broken_barh([(positions[i][0], sizes[i][0])], (positions[i][1], sizes[i][1]), facecolors=colors[i%len(colors)],edgecolors=("black",),linewidths=(1,),)
 
-    ax.set_ylim(0, height)
+    ax.set_ylim(0, height+1)
     ax.set_xlim(0, width)
     ax.set_xticks(range(width+1))
     ax.set_yticks(range(height+1))
@@ -40,6 +40,17 @@ def plot_solution(width, n_rets, sizes, positions, height):
     ax.set_ylabel('height')
 
     plt.show()
+
+# Output the result in txt file
+def write_solution(num, width, height, n_rets, sizes, positions):
+    dirname = os.path.dirname(__file__)
+    filename = os.path.join(dirname, "../out/out−{}.txt".format(num))
+    f= open(filename,"w+")
+    f.write("{} {}\n".format(width, height))
+    f.write("{}\n".format(n_rets))
+    for i in range(len(sizes)):
+        f.write("{} {} {} {}\n".format(sizes[i][0], sizes[i][1], positions[i][0], positions[i][1]))
+    f.close()
 
 # Formatting the file
 width = int(s[0])
@@ -71,7 +82,7 @@ def exactly_one(solver, bool_vars):
     
 def vlsi(height):
     # Variables
-    p = [[[Bool(f"x_{i}_{j}_{n}") for n in range(n_rets+2)] for j in range(height)] for i in range(width)]
+    p = [[[Bool(f"x_{i}_{j}_{n}") for n in range((2*n_rets)+1)] for j in range(height)] for i in range(width)]
 
     s = Solver()
 
@@ -84,16 +95,9 @@ def vlsi(height):
         # A rectangle has only one position
         exactly_one(s, [p[i][j][n] for i in range(width) for j in range(height)])
 
-        # Position should respect width
-        s.add(at_least_one([p[i][j][n] for i in range(width-sizes[n][0]+1) for j in range(height)]))
+        # Position should respect width and the height
+        s.add(at_least_one([p[i][j][n] for i in range(width-sizes[n][0]+1) for j in range(height-sizes[n][1]+1)]))
 
-        # Position should respect height
-        s.add(at_least_one([p[i][j][n] for i in range(width) for j in range(height-sizes[n][1]+1)]))
-
-    
-    # for n in range(n_rets):
-    
-    # for n in range(n_rets):
         
 
     # Solving overlapping
@@ -103,16 +107,9 @@ def vlsi(height):
                 for k in range(i, i + sizes[n][0]):
                     for u in range(j, j + sizes[n][1]):
                         if(k != i or u != j):
-                            s.add(Implies(p[i][j][n], p[k][u][n_rets+1]))
+                            s.add(Implies(p[i][j][n], p[k][u][n+n_rets]))
 
-    for n in range(n_rets):
-        for i in range(width-sizes[n][0]+1):
-            for j in range(height-sizes[n][1]+1):
-                for k in range(i, i + sizes[n][0]):
-                    for u in range(j, j + sizes[n][1]):
-                        if(k != i or u != j):
-                            s.add(Implies(p[i][j][n], And(Or(p[k][u][n_rets+1], p[k][u][n_rets]), And([Not(p[k][u][o]) for o in range(n_rets) if o != n]))))
-                            
+                        
     #for c in s.assertions():
      #   print (c)
 
@@ -122,26 +119,24 @@ def vlsi(height):
         for i in range(width):
             sol.append([])
             for j in range(height):
-                for k in range(n_rets+2):
+                for k in range((2*n_rets)+1):
                     if m.evaluate(p[i][j][k]):
                         sol[i].append(k)
     else:
-        print("Failed to solve")
+        print("Failed to solve at height {}".format(height))
     return sol
 
-a = True
 for i in range(min_h, max_h):
     m = vlsi(i)
-    # aaa = numpy.array(m)
-    # print(aaa)
-    if(m and a):
+    if m :
         positions = []
-        for i in range(len(m)):
-            for j in range(len(m[0])):
-                if (m[i][j] != n_rets) and (m[i][j] != n_rets+1):
-                    positions.append([i,j])
+        for n in range(n_rets):
+            for i in range(len(m)):
+                for j in range(len(m[0])):
+                    if m[i][j] == n:
+                        positions.append([i,j])
         plot_solution(width, n_rets, sizes, positions, i)
-        a = False
+        write_solution(num, width, i+1, n_rets, sizes, positions)
         break
 
 

@@ -4,13 +4,12 @@ from datetime import timedelta
 import fileinput
 import matplotlib.pyplot as plt
 import os
-from pathlib import Path
 import time
 
-#input from keyboard
+# Input from keyboard
 num = input("Please enter the number of the instance:")
 
-#reading the instance
+# Reading the instance
 def read_instance(i):
     s= ''
     dirname = os.path.dirname(__file__)
@@ -21,7 +20,7 @@ def read_instance(i):
         
 s = read_instance(num)
 
-#output the result in txt file
+# Output the result in txt file
 def write_solution(num, width, height, n_rets, sizes, positions):
     dirname = os.path.dirname(__file__)
     filename = os.path.join(dirname, "../out/out−{}.txt".format(num))
@@ -33,7 +32,7 @@ def write_solution(num, width, height, n_rets, sizes, positions):
     f.close()
 
 
-#function for plotting the solution
+# Function for plotting the solution
 def plot_solution(width, n_rets, sizes, positions):
     print(height,positions)
 
