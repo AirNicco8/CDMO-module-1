@@ -81,7 +81,7 @@ print(sizes)
 
 
 start = time.time()
-result = instance.solve(timeout=timedelta(seconds=300), processes=10)
+result = instance.solve(timeout=timedelta(seconds=300), processes=8)
 end = time.time()
 print("Time elapsed: {} seconds".format(end - start))
 

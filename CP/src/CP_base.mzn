@@ -25,25 +25,8 @@ var min_l..max_l: l;
 array[RETS] of int: size1 = [sizes[i,1]| i in RETS];
 array[RETS] of int: size2 = [sizes[i,2]| i in RETS];
 
-%PREDICATES
-
-% given two x or y and the size checks if they overlap
-predicate no_overlap(var int:s1, int:d1, var int:s2, int:d2) =
-    s1 + d1 <= s2 \/ s2 + d2 <= s1;
 
 %CONSTRAINTS
-
-%variables constraints
-%constraint (l = max([positions[i,2] + sizes[i,2] | i in RETS]) /\ area = width*l);
-
-% checks for each group of horizontally overlapped circuits that their sizes sum is less or equal than the width
-% checks for each group of vertically overlapped circuits that their sizes sum is less or equal than the height
-
-% constraint forall(i in RETS)
-%    	(sizes[i,1] + sum([sizes[k,1] | k in RETS where i != k /\ not(no_overlap(positions[i,2], sizes[i,2], positions[k,2], sizes[k,2]))]) <= width);
-% constraint forall(i in RETS)
-%         (sizes[i,1]*sizes[i,2] + sum([sizes[k,1] * sizes[k,2] | k in RETS where i != k /\ not(no_overlap(positions[i,2], sizes[i,2], positions[k,2], sizes[k,2]))]) = sizes[i,2] * width);
-
 constraint cumulative([positions[i,2] | i in RETS], size2, size1, width) /\ forall(i in RETS)
  (positions[i,1]+sizes[i,1] <= width);
 
@@ -54,9 +37,6 @@ constraint cumulative([positions[i,1] | i in RETS], size1, size2, l) /\ forall(i
 %  not overlapped on any axis
 %  overlapped on the x axis or the y axis
 %  but not both axis
-
-%constraint forall(i,j in RETS where i < j)
- %  	(no_overlap(positions[i,1], sizes[i,1], positions[j,1], sizes[j,1]) \/ no_overlap(positions[i,2], sizes[i,2], positions[j,2], sizes[j,2]));	
        
 constraint diffn([positions[i,1] | i in RETS], [positions[i,2] | i in RETS],size1,size2);
 
@@ -93,7 +73,6 @@ constraint forall(i,j in RETS where i<j)(
 
 
 % two circuits which are equal can be switched
-
 constraint forall(i,j in RETS where i<j)(
   if (sizes[j,1] == sizes[i,1] /\ sizes[j,2] == sizes[i,2]) then
     let {

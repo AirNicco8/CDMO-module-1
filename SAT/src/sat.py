@@ -1,9 +1,8 @@
 from z3 import *
 import matplotlib.pyplot as plt
 from itertools import combinations
-import numpy
 
-
+import time
 import fileinput
 import os
 
@@ -67,7 +66,7 @@ for i in range(n_rets):
 
 min_h = max([sizes[i][1] for i in range(n_rets)])
 
-###############################SAT MODEL########################################
+############################### SAT MODEL ######################################
 
 # Functions
 def at_least_one(bool_vars):
@@ -80,11 +79,9 @@ def exactly_one(solver, bool_vars):
     solver.add(at_most_one(bool_vars))
     solver.add(at_least_one(bool_vars))
     
-def vlsi(height):
+def vlsi(s, height):
     # Variables
     p = [[[Bool(f"x_{i}_{j}_{n}") for n in range((2*n_rets)+1)] for j in range(height)] for i in range(width)]
-
-    s = Solver()
 
     # A cell has only one value
     for i in range(width):
@@ -98,8 +95,6 @@ def vlsi(height):
         # Position should respect width and the height
         s.add(at_least_one([p[i][j][n] for i in range(width-sizes[n][0]+1) for j in range(height-sizes[n][1]+1)]))
 
-        
-
     # Solving overlapping
     for n in range(n_rets):
         for i in range(width-sizes[n][0]+1):
@@ -109,11 +104,8 @@ def vlsi(height):
                         if(k != i or u != j):
                             s.add(Implies(p[i][j][n], p[k][u][n+n_rets]))
 
-                        
-    #for c in s.assertions():
-     #   print (c)
-
     sol = []
+
     if s.check() == sat:
         m = s.model()
         for i in range(width):
@@ -122,12 +114,25 @@ def vlsi(height):
                 for k in range((2*n_rets)+1):
                     if m.evaluate(p[i][j][k]):
                         sol[i].append(k)
+    elif s.reason_unknown() == "timeout":
+        print("Solver timeout")
     else:
         print("Failed to solve at height {}".format(height))
     return sol
 
+
+start = time.time()
 for i in range(min_h, max_h):
-    m = vlsi(i)
+    # Solver
+    s = Solver()
+
+    # Time limit 5 minutes
+    times = 300000 # in milliseconds
+    s.set(timeout=times)
+
+    m = vlsi(s, i)
+
+    
     if m :
         positions = []
         for n in range(n_rets):
@@ -138,5 +143,6 @@ for i in range(min_h, max_h):
         plot_solution(width, n_rets, sizes, positions, i)
         write_solution(num, width, i+1, n_rets, sizes, positions)
         break
-
+end = time.time()
+print("Time elapsed: {} seconds".format(end - start))
 
