@@ -80,17 +80,21 @@ def vlsi(height):
         for j in range(height):
             exactly_one(s, p[i][j])
 
-    # A rectangle has only one position
     for n in range(n_rets):
+        # A rectangle has only one position
         exactly_one(s, [p[i][j][n] for i in range(width) for j in range(height)])
 
-    # Position should respect width
-    for n in range(n_rets):
+        # Position should respect width
         s.add(at_least_one([p[i][j][n] for i in range(width-sizes[n][0]+1) for j in range(height)]))
 
-    # Position should respect height
-    for n in range(n_rets):
+        # Position should respect height
         s.add(at_least_one([p[i][j][n] for i in range(width) for j in range(height-sizes[n][1]+1)]))
+
+    
+    # for n in range(n_rets):
+    
+    # for n in range(n_rets):
+        
 
     # Solving overlapping
     for n in range(n_rets):
@@ -100,6 +104,14 @@ def vlsi(height):
                     for u in range(j, j + sizes[n][1]):
                         if(k != i or u != j):
                             s.add(Implies(p[i][j][n], p[k][u][n_rets+1]))
+
+    for n in range(n_rets):
+        for i in range(width-sizes[n][0]+1):
+            for j in range(height-sizes[n][1]+1):
+                for k in range(i, i + sizes[n][0]):
+                    for u in range(j, j + sizes[n][1]):
+                        if(k != i or u != j):
+                            s.add(Implies(p[i][j][n], And(Or(p[k][u][n_rets+1], p[k][u][n_rets]), And([Not(p[k][u][o]) for o in range(n_rets) if o != n]))))
                             
     #for c in s.assertions():
      #   print (c)
@@ -114,14 +126,14 @@ def vlsi(height):
                     if m.evaluate(p[i][j][k]):
                         sol[i].append(k)
     else:
-         print("Failed to solve")
+        print("Failed to solve")
     return sol
 
 a = True
 for i in range(min_h, max_h):
     m = vlsi(i)
-    aaa = numpy.array(m)
-    print(aaa)
+    # aaa = numpy.array(m)
+    # print(aaa)
     if(m and a):
         positions = []
         for i in range(len(m)):
@@ -130,5 +142,6 @@ for i in range(min_h, max_h):
                     positions.append([i,j])
         plot_solution(width, n_rets, sizes, positions, i)
         a = False
+        break
 
 
