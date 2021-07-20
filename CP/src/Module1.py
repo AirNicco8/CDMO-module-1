@@ -52,34 +52,34 @@ def plot_solution(width, n_rets, sizes, positions):
     plt.show()
 
 
-#formatting the file
+# Formatting the input
 width = int(s[0])
 n_rets = int(s[1])
 
-#splitting the list and casting the string to int
+# Split the list and casting the string to int
 sizes = [i.split() for i in s[-n_rets:]]
 sizes = [[int(sizes[i][j]) for j in range(2)] for i in range(n_rets)]
 sizes.sort(key=lambda tup: tup[1]*tup[0], reverse=True)
 
-#load model from file
+# Load model from file
 dirname = os.path.dirname(__file__)
 filename = os.path.join(dirname, "./CP_base.mzn")
 model = Model(filename)
 
-#Find the MiniZinc solver configuration for Gecode
+# Find the MiniZinc solver configuration for Gecode
 gecode = Solver.lookup("gecode")
 
-#Create an instance of the model
+# Create an instance of the model
 instance = Instance(gecode, model)
 
-#Assignment
+# Assignment
 instance["width"] = width
 instance["n_rets"]= n_rets
 instance["sizes"] = sizes
 
 print(sizes)
 
-
+# Solver
 start = time.time()
 result = instance.solve(timeout=timedelta(seconds=300), processes=8)
 end = time.time()

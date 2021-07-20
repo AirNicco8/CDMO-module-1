@@ -14,19 +14,19 @@ int: min_l = max([sizes[i,2] | i in RETS]);
 % the maximum length is the sum of the heights of the input circuits
 int: max_l = sum([sizes[i,2] | i in RETS]);
 
-% array of vars of position 
-%that each circuit will take in the solution
+% Array of vars of position 
+% that each circuit will take in the solution
 array[RETS, 1..2] of var 0..sum([sizes[i,2]| i in RETS]): positions; 
 
-%the length (height) of the board
+% The length (height) of the board
 var min_l..max_l: l;
 
-%decomposition of the size array
+% Decomposition of the size array
 array[RETS] of int: size1 = [sizes[i,1]| i in RETS];
 array[RETS] of int: size2 = [sizes[i,2]| i in RETS];
 
 
-%CONSTRAINTS
+% CONSTRAINTS
 constraint cumulative([positions[i,2] | i in RETS], size2, size1, width) /\ forall(i in RETS)
  (positions[i,1]+sizes[i,1] <= width);
 
@@ -40,7 +40,7 @@ constraint cumulative([positions[i,1] | i in RETS], size1, size2, l) /\ forall(i
        
 constraint diffn([positions[i,1] | i in RETS], [positions[i,2] | i in RETS],size1,size2);
 
-% symmetry breaking
+% Symmetry breaking
 
 % two circuits forming a bigger rectangle in any of the dimensions can be switched
 
@@ -72,7 +72,7 @@ constraint forall(i,j in RETS where i<j)(
   );
 
 
-% two circuits which are equal can be switched
+% Two circuits which are equal can be switched
 constraint forall(i,j in RETS where i<j)(
   if (sizes[j,1] == sizes[i,1] /\ sizes[j,2] == sizes[i,2]) then
     let {
@@ -88,9 +88,9 @@ constraint forall(i,j in RETS where i<j)(
 
 %*/
 
-%OBJECTIVE
+% OBJECTIVE
 
-%search annotations
+% Search annotations
 
 ann: search_split1 = int_search([positions[i,2] | i in RETS] ++ [positions[i,1] | i in RETS], dom_w_deg, indomain_min, complete);
 ann: search_split2 = int_search([l], dom_w_deg, indomain_min, complete);
@@ -106,4 +106,4 @@ ann: search_ann_io = int_search([l] ++ [positions[i,2] | i in RETS] ++ [position
 % we want to minimize l
 
 %solve :: seq_search([search_split2, search_split1]) minimize l;
-solve :: search_ann_io minimize l;
+solve :: search_ann_ff minimize l;
